@@ -1,0 +1,76 @@
+#include <Adafruit_Sensor.h>
+#include <DHT.h>//LIBRERIA DEL SENSOR DE HUMEDAD Y TEMPERATURA
+
+#define pulso 3  //define la salida por donde se manda el pulso como 9
+#define rebote 4 //define la salida por donde se recibe el rebote como 10
+#define in_caudal A1 //define la salida por donde se recibe el caudal como 10
+#define DHTPIN 2//define la salida por donde se recibe el sensor DHT como 10
+#define DHTTYPE DHT11 //se define el tipo de sensor, el cual es 11
+#define in_lluvia 5//se define el tipo de sensor
+DHT dht(DHTPIN, DHTTYPE);
+
+int dht_in;//crea la variable "dht"
+int caudal; //crea la variable "caudal"
+int lluvia; //crea la variable "lluvia"
+int distancia;  //crea la variable "distancia"
+float tiempo;  //crea la variable tiempo (como float)
+
+void setup()
+{
+  Serial.begin(9600);  //inicializa el puerto serie
+  pinMode(pulso, OUTPUT); //Declaramos el pin 3 como salida (pulso ultrasonido)
+  pinMode(rebote, INPUT); //Declaramos el pin 4 como entrada (recepción del pulso)
+  pinMode(lluvia, INPUT); //Declaramos el pin 5 como entrada
+  dht.begin();
+}
+ 
+void loop()
+{
+  int t = dht.readTemperature(); 
+  int h = dht.readHumidity(); 
+  digitalWrite(pulso,LOW); //Por cuestión de estabilización del sensor
+  delayMicroseconds(5);
+  digitalWrite(pulso, HIGH); //envío del pulso ultrasónico
+  delayMicroseconds(10);
+  tiempo = pulseIn(rebote, HIGH);  //funcion para medir el tiempo y guardarla en la variable "tiempo"
+  distancia = 0.01715*tiempo; //fórmula para calcular la distancia
+   
+  //Monitorización en centímetros por el monitor serial/
+  Serial.print("Distancia: ");
+  Serial.print(distancia);
+  Serial.println(" cm");
+
+  //SENSOR DE CAUDAL REALIZADO CON SERVOMOTOR
+
+  caudal= map(analogRead(in_caudal), 0, 1023, 0, 60);
+  Serial.print("caudal: ");
+  Serial.print(caudal);
+  Serial.println(" L");
+
+  //SENSOR DE HUMEDAD Y TEMPERATURA
+
+      //Mostramos mensaje con valores actuales de humedad y temperatura
+    Serial.print("Humedad relativa: ");
+    Serial.print(h);
+    Serial.print(" %\t");
+    Serial.print("Temperatura: ");
+    Serial.print(t);
+    Serial.println(" *C");
+
+ 
+
+    //SENSOR DE DETECCION DE LLUVIA 
+
+    lluvia=digitalRead(in_lluvia); //lectura del sensor de lluvia 
+
+        if(lluvia==LOW){
+            Serial.println("SE DETECTA LLUVIA");
+        }else{
+          Serial.println("NO SE DETECTA LLUVIA");
+        }
+     Serial.println("--------------------------------------------------------");
+
+       delay(1000); //quitar
+
+     
+}
