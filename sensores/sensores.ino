@@ -1,138 +1,174 @@
-#include <Key.h>
+//LIBRERIAS ///////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include <LiquidCrystal.h>
 #include <Adafruit_Sensor.h>
 #include <DHT.h>//LIBRERIA DEL SENSOR DE HUMEDAD Y TEMPERATURA
-#define pulso 3  //define la salida por donde se manda el pulso como 9
-#define rebote 4 //define la salida por donde se recibe el rebote como 10
-#define in_caudal A1 //define la salida por donde se recibe el caudal como 10
-#define DHTPIN 2//define la salida por donde se recibe el sensor DHT como 10
-#define DHTTYPE DHT11 //se define el tipo de sensor, el cual es 11
-#define in_lluvia 5//se define el tipo de sensor
-DHT dht(DHTPIN, DHTTYPE);
-LiquidCrystal lcd(23, 25, 27, 29, 31, 33); //33,31,29,27,25,23
-int dht_in;//crea la variable "dht"
-int caudal; //crea la variable "caudal"
-int lluvia; //crea la variable "lluvia"
-int distancia;  //crea la variable "distancia"
-float tiempo;  //crea la variable tiempo (como float)
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include <ArduinoJson.h>
+
+//PUERTOS /////////////////////////////////////////////////////////////////////////////////////////////////////
+  
+  //Puerto sensor de flujo
+  const int sensorPin = 7;
+  
+  //Puertos sensor nivel de agua
+  #define pulso 3  //define la salida por donde se manda el pulso como 9
+  #define rebote 4 //define la salida por donde se recibe el rebote como 10
+  
+  //Puertos sensor de humedad y temperatura
+  #define DHTPIN 2//define la salida por donde se recibe el sensor DHT como 10
+  #define DHTTYPE DHT11 //se define el tipo de sensor, el cual es 11
+
+  //Puerto sensor de lluvia
+  #define in_lluvia 5//se define el tipo de sensor
+  #define analog_lluvia A0
+
+//VARIABLES ///////////////////////////////////////////////////////////////////////////////////////////////////
+  
+  //Variables para el sensor de flujo
+  const int measureInterval = 100;
+  volatile int pulseConter;
+  const float factorK = 7.5;
+  float fin2=0;
+
+  //Variable para el sensor de nivel de agua
+  int distancia;  //crea la variable "distancia"
+  float tiempo;  //crea la variable tiempo (como float)
+
+  //Variable para el sensor de lluvia
+  int lluvia; //crea la variable "lluvia"
+  int intensidadLluvia = 0;
+  boolean estadoLluvia = false;
+
+  //Variable de ambiente globales
+  int dht_in;//crea la variable "dht"
+
+//FUNCIONES ///////////////////////////////////////////////////////////////////////////////////////////////////
+  
+  //Función de pulsos para el sensor de flujo
+  void ISRCountPulse(){
+    pulseConter++;
+  }
+  
+  //Función para obtener la frecuencia del sensor de flujo
+  float GetFrequency(){
+    pulseConter = 0;
+    delay(measureInterval);
+    return (float)pulseConter * 1000 / measureInterval;
+  }
+
+//DECLARACIONES ///////////////////////////////////////////////////////////////////////////////////////////////
+
+  //Declaración para el sensor de temperatura y humedad
+  DHT dht(DHTPIN, DHTTYPE);
 
 void setup()
 {
   Serial.begin(9600);  //inicializa el puerto serie
+
+  //Inicialización para el sensor de flujo
+  attachInterrupt(digitalPinToInterrupt(sensorPin), ISRCountPulse,RISING); 
+
+  //Inicialización para el sensor de nivel de agua
   pinMode(pulso, OUTPUT); //Declaramos el pin 3 como salida (pulso ultrasonido)
   pinMode(rebote, INPUT); //Declaramos el pin 4 como entrada (recepción del pulso)
+
+  //Inicialización para el sensor de lluvia
   pinMode(lluvia, INPUT); //Declaramos el pin 5 como entrada
+  
+  //Inicialización para el sensor de temperatura y humedad
   dht.begin();
-  lcd.begin(16,2);
 }
  
 void loop()
 {
-
-  TECLA++;
-
-  if(TECLA==6){       //SUMADOR CON REINICIO LCD
-    TECLA=0;
-  }
+  //VOID LOOPS /////////////////////////////////////////////////////////////////////////////////////////////////
   
-  int t = dht.readTemperature();  //TOMA DE DATOS TEMPERATURA SENSOR DTH
-  int h = dht.readHumidity();     //TOMA DE DATOS HUMEDAD SENSOR DTH
-  digitalWrite(pulso,LOW); //Por cuestión de estabilización del sensor
-  delayMicroseconds(5);
-  digitalWrite(pulso, HIGH); //envío del pulso ultrasónico
-  delayMicroseconds(10);
-  tiempo = pulseIn(rebote, HIGH);  //funcion para medir el tiempo y guardarla en la variable "tiempo"
-  distancia = 0.01715*tiempo; //fórmula para calcular la distancia
-   
-  //Monitorización en centímetros por el monitor serial/
-  Serial.print("Distancia: ");
-  Serial.print(distancia);
-  Serial.println(" cm");
+    //VOID LOOP sensor de flujo
+    float frequency = GetFrequency();// obtener frecuencia en Hz
+    float flow_Lmin = frequency / factorK;// calcular caudal L/min
+    fin2=flow_Lmin;
+  
+    //VOID LOOP para el sensor de nivel de agua
+    digitalWrite(pulso,LOW); //Por cuestión de estabilización del sensor
+    delayMicroseconds(5);
+    digitalWrite(pulso, HIGH); //envío del pulso ultrasónico
+    delayMicroseconds(10);
+    tiempo = pulseIn(rebote, HIGH);  //funcion para medir el tiempo y guardarla en la variable "tiempo"
+    distancia = 0.01715*tiempo; //fórmula para calcular la distancia
 
-  //SENSOR DE CAUDAL REALIZADO CON SERVOMOTOR
+    //VOID LOOP sensor de lluvia
+    intensidadLluvia = analogRead(analog_lluvia); 
+    lluvia=digitalRead(in_lluvia); //lectura del sensor de lluvia
+    if(lluvia==LOW){
+      estadoLluvia = true;
+    }else{
+      estadoLluvia = false;
+    }
 
-  caudal= map(analogRead(in_caudal), 0, 1023, 0, 6000);
-  Serial.print("caudal: ");
-  Serial.print(caudal);
-  Serial.println(" L");
+    //VOID LOOP para el sensor de temperatura y humedad
+    int temperaturaAmbiental = dht.readTemperature();  //TOMA DE DATOS TEMPERATURA SENSOR DTH
+    int humedadAmbiental = dht.readHumidity();     //TOMA DE DATOS HUMEDAD SENSOR DTH
 
-  //SENSOR DE HUMEDAD Y TEMPERATURA
+   //SERIAL ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-      //Mostramos mensaje con valores actuales de humedad y temperatura
+    Serial.println("SALIDA SENSORES ***************************************");
+    //Serial sensor de flujo
+    Serial.print("Frecuencia: ");
+    Serial.print(frequency, 0);
+    Serial.print(" (Hz)\tCaudal: ");
+    Serial.print(flow_Lmin, 3);
+    Serial.println(" (L/min)");
+
+    //Serial sensor de nivel de agua
+    Serial.print("Distancia: ");
+    Serial.print(distancia);
+    Serial.println(" cm");
+
+    //Serial sensor de lluvia
+    Serial.print("Intensidad lluvia: ");
+    Serial.print(intensidadLluvia);
+    Serial.print(" - ");
+    Serial.print(" Estado lluvia: ");
+    Serial.print(estadoLluvia);
+    Serial.println(" ");
+
+    //Serial sensor de temperatura y humeda
     Serial.print("Humedad relativa: ");
-    Serial.print(h);
+    Serial.print(humedadAmbiental);
     Serial.print(" %\t");
     Serial.print("Temperatura: ");
-    Serial.print(t);
+    Serial.print(temperaturaAmbiental);
     Serial.println(" *C");
 
-    //SENSOR DE DETECCION DE LLUVIA 
+    Serial.println("*******************************************************");
 
-    lluvia=digitalRead(in_lluvia); //lectura del sensor de lluvia 
-        if(lluvia==LOW){
-            Serial.println("SE DETECTA LLUVIA");
-        }else{
-          Serial.println("NO SE DETECTA LLUVIA");
-        }
-       lcd1();
-       Serial.println("--------------------------------------------------------");
-       delay(4000); //TIEMPO DEL PROCESO
-}
+  //ENVIO DE DATOS AL ESP32 ////////////////////////////////////////////////////////////////////////////////////
 
-void lcd1(){   //funcion para el LCD
+     //Declaración DOC para el JSON
+    StaticJsonDocument<256> doc;
+    
+    //Creació de un JSON Vacio
+    JsonObject json = doc.to<JsonObject>();
+  
+    //Agregar las claves y valores de las variables que se quiere mandar al esp32
+    json["frecuancia_flujo"] = String(frequency);
+    json["flujo_agua"] = String(flow_Lmin);
+    json["nivel_agua"] = String(distancia);
+    json["intensidad_lluvia"] = String(intensidadLluvia);
+    json["estado_lluvia"] = String(estadoLluvia);
+    json["huemdad_ambiental"] = String(humedadAmbiental);
+    json["temperatura_ambiental"] = String(temperaturaAmbiental);
 
-  int t = dht.readTemperature(); //SE VUELVE A TOMAR LAS VARIABLES
-  int h = dht.readHumidity(); 
-  //TECLA=teclado.getKey();
-  //TECLA=1;
+    //Serializción JSON
+    String output;
+    serializeJsonPretty(json, output);
 
-    if(TECLA==0){                                 //INICIO
-        lcd.setCursor(0,0);
-        lcd.print("BIENVENIDO");
-        lcd.setCursor(0,1);
-        lcd.print("192.168.0.17:3010/api           ");
-        Serial.println(TECLA);
-        
-    }else if(TECLA == 1){                         //DISTANCIA EN LCD
-
-        lcd.setCursor(0,0);
-        lcd.print("la distancia es=           ");
-        lcd.setCursor(0,1);
-        lcd.print(distancia);
-        lcd.print(" cm                       ");
-        Serial.println(TECLA);
-        
-    }else if(TECLA==2){                         //EL CAUDAL EN LCD
-        lcd.setCursor(0,0);
-        lcd.print("el caudal es=             ");
-        lcd.setCursor(0,1);
-        lcd.print(caudal);
-        lcd.print(" L                         ");
-        Serial.println(TECLA);
-      }else if(TECLA==3){                         //HUMEDAD EN LCD
-        lcd.setCursor(0,0);
-        lcd.print("la humedad es=               ");
-        lcd.setCursor(0,1);
-        lcd.print(h);
-        lcd.print(" %                                      ");
-        Serial.println(TECLA);
-      }else if(TECLA==4){                         //TEMPERATURA EN LCD
-        lcd.setCursor(0,0);
-        lcd.print("la temperatura amb=                   ");
-        lcd.setCursor(0,1);
-        lcd.print(t);
-        lcd.print(" *C                                  ");
-        Serial.println(TECLA);
-      }else if(TECLA==5){                         //LLUVIA EN LCD
-        lcd.setCursor(0,0);
-        lcd.print(" ¿lluvia?                               ");
-        lcd.setCursor(0,1);
-        if(lluvia==LOW){
-          lcd.print("SE DETECTA LLUVIA                          ");
-        }else{
-          lcd.print("NO SE DETECTA LLUVIA                        ");
-        }
-        Serial.println(TECLA);
-      }
-
+    //Poner JSON en el serial 9600 
+    Serial.println("SALIDA JSON ----------------------------------------------");
+    Serial.println(output);
+    Serial.println("----------------------------------------------------------");
+    
+  delay(2000); //TIEMPO DEL PROCESO
 }
