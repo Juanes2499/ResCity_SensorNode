@@ -2,9 +2,6 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-#define RX2 16
-#define TX2 17
-
 //Credenciales de la red WIFI
 const char* ssid = "402C";
 const char* password = "nichoy99082411425";
@@ -18,8 +15,8 @@ const char* token_dispositivo = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZF9kaX
 const char* token_autenticacion = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJRF9ESVNQT1NJVElWTyI6IjkwMWVlNTM0LTRjYTEtNDkzMi1hNGQ4LWVmNWM0ZTY0ZGJhMSIsIlRPS0VOIjoiZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnBaRjlrYVhOd2IzTnBkR2wyYnlJNklqa3dNV1ZsTlRNMExUUmpZVEV0TkRrek1pMWhOR1E0TFdWbU5XTTBaVFkwWkdKaE1TSXNJbTFoY21OaElqb2lWR1Z6ZENJc0luSmxabVZ5Wlc1amFXRWlPaUpVWlhOMElISmxaaUlzSW14aGRHbDBkV1FpT2lJeE1URXhMams1T1NJc0lteHZibWRwZEhWa0lqb2lMVEV1T0RrNE55SXNJbTV2YldKeVpWOXRhV055YjNObGNuWnBZMmx2SWpvaVUwVk9VMDlTUlZOZlRsTWlMQ0psYldGcGJGOXlaWE53YjI1ellXSnNaU0k2SW1wMVlXNHVibWxqYUc5NVFIVmhieTVsWkhVdVkyOGlMQ0pwWVhRaU9qRTJNVGM1TXpRNU5ERXNJbVY0Y0NJNk1UWXhOemswTkRrME1IMC5wanBJOXoxUURXZmNwUFBYRHdCYk91enpEcFFhTGk1QlBzd1k5Q0pYR2tJIiwiTUFSQ0EiOiJUZXN0IiwiUkVGRVJFTkNJQSI6IlRlc3QgcmVmIiwiTk9NQlJFX01JQ1JPU0VSVklDSU8iOiJTRU5TT1JFU19OUyIsIkVNQUlMX1JFU1BPTlNBQkxFIjoianVhbi5uaWNob3lAdWFvLmVkdS5jbyIsIkRJU1BPU0lUSVZPX0FDVElWTyI6MSwiaWF0IjoxNjE3OTM3NDA2LCJleHAiOjE2NDk0NzM0MDZ9.8wiuN6xfS_Fc1wPw0UG7HESs7lWHr3QOFvGF5d2cpn8";
 
 const int greenPIN = 2;
-const int redPIN = 15;
-const int bluePIN = 0;
+const int redPIN = 3;
+const int bluePIN = 4;
 
 
 void setup() {
@@ -50,7 +47,7 @@ void loop() {
   HTTPClient http;
   WiFiClient client;
 
-  StaticJsonDocument<256> doc, doc2;
+  StaticJsonDocument<256> doc;
   JsonObject json = doc.to<JsonObject>(); //Se declara un objeto o un JSON vacio
 
   //Se valida el estado del WIFI
@@ -60,9 +57,9 @@ void loop() {
     digitalWrite(redPIN , LOW);   
     delay(100); 
     digitalWrite(greenPIN , HIGH);   
-    delay(100);
+    delay(100);     
 
-     //Headers de la petición POST
+    //Headers de la petición POST
     http.begin(host);
     http.addHeader("Content-Type", "application/json");
     http.addHeader("Authorization", token_autenticacion);
@@ -73,18 +70,16 @@ void loop() {
 
     //Se crea un subobjeto o JSON hijo dentro del JSON principal
     JsonObject variables = json.createNestedObject("variables");
-
-    deserializeJson(doc2, Serial2.readString());
+        
     //poner variables para enviar a la plataforma
-    variables["nivel_agua"] = doc2["nivel_agua"];
-    
-//    Serial.print("Datos from mega");
-//    Serial.println(Serial2.readString());
-//    delay(100);
+    variables["nivel_agua"] = "50.5";
+
+    Serial.print("Datos from mega");
+    //Serial.println(Serial2.readString());
+    delay(500);
 
     String output;
     serializeJsonPretty(json, output); //Se serializa el JSON
-    Serial.println(output);
     int httpResponseCode = http.POST(output);
 
     //Control de errores en respuesta del server
@@ -97,7 +92,7 @@ void loop() {
       Serial.println(payload);
     }
     
-    delay(100);
+    delay(1000);
     
   }else{
     digitalWrite(greenPIN , LOW);   // poner el Pin en HIGH
@@ -107,5 +102,13 @@ void loop() {
   }
 
   digitalWrite(bluePIN , LOW);   
-  delay(1500);
+  delay(3000);
+}void setup() {
+  // put your setup code here, to run once:
+
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
 }
