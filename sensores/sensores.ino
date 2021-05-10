@@ -23,6 +23,14 @@
   //Puerto sensor de lluvia
   #define in_lluvia 5//se define el tipo de sensor
   #define analog_lluvia A0
+  
+//DECLARACIONES ///////////////////////////////////////////////////////////////////////////////////////////////
+
+  //Declaración para el sensor de temperatura y humedad
+  DHT dht(DHTPIN, DHTTYPE);
+
+  //Declaración de la pantalla
+  LiquidCrystal lcd(23, 25, 27, 29, 31, 33);
 
 //VARIABLES ///////////////////////////////////////////////////////////////////////////////////////////////////
   
@@ -31,6 +39,8 @@
   volatile int pulseConter;
   const float factorK = 7.5;
   float fin2=0;
+  float frequency = 0.0;
+  float flow_Lmin = 0.0;
 
   //Variable para el sensor de nivel de agua
   int distancia;  //crea la variable "distancia"
@@ -41,8 +51,13 @@
   int intensidadLluvia = 0;
   boolean estadoLluvia = false;
 
-  //Variable de ambiente globales
+  //Variable para el sensor de temperatura y humedad ambiental
   int dht_in;//crea la variable "dht"
+  int temperaturaAmbiental = 0;
+  int humedadAmbiental = 0;
+
+  //Variable pantalla
+  int showMessage = 0;  //crea la cariable tecla
 
 //FUNCIONES ///////////////////////////////////////////////////////////////////////////////////////////////////
   
@@ -58,10 +73,82 @@
     return (float)pulseConter * 1000 / measureInterval;
   }
 
-//DECLARACIONES ///////////////////////////////////////////////////////////////////////////////////////////////
-
-  //Declaración para el sensor de temperatura y humedad
-  DHT dht(DHTPIN, DHTTYPE);
+  //Función pantalla
+  void lcdScreen(){   //funcion para el LCD
+   
+    if(showMessage == 0){                                 //INICIO
+      
+      lcd.setCursor(0,0);
+      lcd.print("ResCity                      ");
+      lcd.setCursor(0,1);
+      lcd.print("                             ");
+      Serial.println(showMessage);
+        
+    }else if(showMessage == 1){                         //Frecuencia flujo
+    
+      lcd.setCursor(0,0);
+      lcd.print("Frec Flujo:                  ");
+      lcd.setCursor(0,1);
+      lcd.print(frequency);
+      lcd.print(" (Hz)/caudal                 ");
+      Serial.println(showMessage);
+        
+    }else if(showMessage == 2){                         //Flujo agua
+      
+      lcd.setCursor(0,0);
+      lcd.print("Flujo Agua:                  ");
+      lcd.setCursor(0,1);
+      lcd.print(flow_Lmin);
+      lcd.print(" (L/min)                     ");
+      Serial.println(showMessage);
+      
+    }else if(showMessage == 3){                         //Nivel agua
+         
+      lcd.setCursor(0,0);
+      lcd.print("Nivel Agua:                  ");
+      lcd.setCursor(0,1);
+      lcd.print(distancia);
+      lcd.print(" cm                          ");
+      Serial.println(showMessage);
+      
+    }else if(showMessage == 4){                         //Intensidad lluvia
+      
+      lcd.setCursor(0,0);
+      lcd.print("Int Lluvia:                  ");
+      lcd.setCursor(0,1);
+      lcd.print(intensidadLluvia);
+      lcd.print("                             ");
+      Serial.println(showMessage);
+      
+    }else if(showMessage == 5){                         //Estado lluvia
+      
+      lcd.setCursor(0,0);
+      lcd.print("Estado Lluvia:               ");
+      lcd.setCursor(0,1);
+      lcd.print(estadoLluvia);
+      lcd.print("                             ");
+      Serial.println(showMessage);
+      
+    }else if(showMessage == 6){                         //Humedad ambiental
+      
+      lcd.setCursor(0,0);
+      lcd.print("Humedad Amb:                 ");
+      lcd.setCursor(0,1);
+      lcd.print(humedadAmbiental);
+      lcd.print(" %                           ");
+      Serial.println(showMessage);
+      
+    }else if(showMessage == 7){                         //Temperarua ambiental
+      
+      lcd.setCursor(0,0);
+      lcd.print("Temperatura Amb:              ");
+      lcd.setCursor(0,1);
+      lcd.print(temperaturaAmbiental);
+      lcd.print(" *C                          ");
+      Serial.println(showMessage);
+      
+    }    
+  }
 
 void setup()
 {
@@ -77,17 +164,29 @@ void setup()
   //Inicialización para el sensor de lluvia
   pinMode(lluvia, INPUT); //Declaramos el pin 5 como entrada
   
-  //Inicialización para el sensor de temperatura y humedad
+  //Inicialización para el sensor de temperatura y humedad ambiental
   dht.begin();
+
+  //Inicialización pantalla
+  lcd.begin(16,2);
+  
 }
  
 void loop()
 {
+  // INCREMNTADOR PANTALLA /////////////////////////////////////////////////////////////////////////////////////
+    
+    showMessage++;
+
+    if(showMessage > 7){       //SUMADOR CON REINICIO LCD
+      showMessage=0;
+    }
+
   //VOID LOOPS /////////////////////////////////////////////////////////////////////////////////////////////////
   
     //VOID LOOP sensor de flujo
-    float frequency = GetFrequency();// obtener frecuencia en Hz
-    float flow_Lmin = frequency / factorK;// calcular caudal L/min
+    frequency = GetFrequency();// obtener frecuencia en Hz
+    flow_Lmin = frequency / factorK;// calcular caudal L/min
     fin2=flow_Lmin;
   
     //VOID LOOP para el sensor de nivel de agua
@@ -107,9 +206,9 @@ void loop()
       estadoLluvia = false;
     }
 
-    //VOID LOOP para el sensor de temperatura y humedad
-    int temperaturaAmbiental = dht.readTemperature();  //TOMA DE DATOS TEMPERATURA SENSOR DTH
-    int humedadAmbiental = dht.readHumidity();     //TOMA DE DATOS HUMEDAD SENSOR DTH
+    //VOID LOOP para el sensor de temperatura y humedad ambiental
+    temperaturaAmbiental = dht.readTemperature();  //TOMA DE DATOS TEMPERATURA SENSOR DTH
+    humedadAmbiental = dht.readHumidity();     //TOMA DE DATOS HUMEDAD SENSOR DTH
 
    //SERIAL ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -134,7 +233,7 @@ void loop()
     Serial.print(estadoLluvia);
     Serial.println(" ");
 
-    //Serial sensor de temperatura y humeda
+    //Serial sensor de temperatura y humeda ambiental
     Serial.print("Humedad relativa: ");
     Serial.print(humedadAmbiental);
     Serial.print(" %\t");
@@ -169,6 +268,10 @@ void loop()
     Serial.println("SALIDA JSON ----------------------------------------------");
     Serial.println(output);
     Serial.println("----------------------------------------------------------");
+
+  //MOSTRAR EN PANTALLA /////////////////////////////////////////////////////////////////////////////////////////
+    
+    lcdScreen();
     
   delay(2000); //TIEMPO DEL PROCESO
 }
