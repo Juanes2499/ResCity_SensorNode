@@ -82,7 +82,7 @@
       lcd.print("ResCity                      ");
       lcd.setCursor(0,1);
       lcd.print("                             ");
-      Serial.println(showMessage);
+      //Serial.println(showMessage);
         
     }else if(showMessage == 1){                         //Frecuencia flujo
     
@@ -91,7 +91,7 @@
       lcd.setCursor(0,1);
       lcd.print(frequency);
       lcd.print(" (Hz)/caudal                 ");
-      Serial.println(showMessage);
+      //Serial.println(showMessage);
         
     }else if(showMessage == 2){                         //Flujo agua
       
@@ -100,7 +100,7 @@
       lcd.setCursor(0,1);
       lcd.print(flow_Lmin);
       lcd.print(" (L/min)                     ");
-      Serial.println(showMessage);
+      //Serial.println(showMessage);
       
     }else if(showMessage == 3){                         //Nivel agua
          
@@ -109,7 +109,7 @@
       lcd.setCursor(0,1);
       lcd.print(distancia);
       lcd.print(" cm                          ");
-      Serial.println(showMessage);
+      //Serial.println(showMessage);
       
     }else if(showMessage == 4){                         //Intensidad lluvia
       
@@ -118,7 +118,7 @@
       lcd.setCursor(0,1);
       lcd.print(intensidadLluvia);
       lcd.print("                             ");
-      Serial.println(showMessage);
+      //Serial.println(showMessage);
       
     }else if(showMessage == 5){                         //Estado lluvia
       
@@ -127,7 +127,7 @@
       lcd.setCursor(0,1);
       lcd.print(estadoLluvia);
       lcd.print("                             ");
-      Serial.println(showMessage);
+      //Serial.println(showMessage);
       
     }else if(showMessage == 6){                         //Humedad ambiental
       
@@ -136,7 +136,7 @@
       lcd.setCursor(0,1);
       lcd.print(humedadAmbiental);
       lcd.print(" %                           ");
-      Serial.println(showMessage);
+      //Serial.println(showMessage);
       
     }else if(showMessage == 7){                         //Temperarua ambiental
       
@@ -145,7 +145,7 @@
       lcd.setCursor(0,1);
       lcd.print(temperaturaAmbiental);
       lcd.print(" *C                          ");
-      Serial.println(showMessage);
+      //Serial.println(showMessage);
       
     }    
   }
@@ -212,36 +212,36 @@ void loop()
 
    //SERIAL ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    Serial.println("SALIDA SENSORES ***************************************");
-    //Serial sensor de flujo
-    Serial.print("Frecuencia: ");
-    Serial.print(frequency, 0);
-    Serial.print(" (Hz)\tCaudal: ");
-    Serial.print(flow_Lmin, 3);
-    Serial.println(" (L/min)");
-
-    //Serial sensor de nivel de agua
-    Serial.print("Distancia: ");
-    Serial.print(distancia);
-    Serial.println(" cm");
-
-    //Serial sensor de lluvia
-    Serial.print("Intensidad lluvia: ");
-    Serial.print(intensidadLluvia);
-    Serial.print(" - ");
-    Serial.print(" Estado lluvia: ");
-    Serial.print(estadoLluvia);
-    Serial.println(" ");
-
-    //Serial sensor de temperatura y humeda ambiental
-    Serial.print("Humedad relativa: ");
-    Serial.print(humedadAmbiental);
-    Serial.print(" %\t");
-    Serial.print("Temperatura: ");
-    Serial.print(temperaturaAmbiental);
-    Serial.println(" *C");
-
-    Serial.println("*******************************************************");
+//    Serial.println("SALIDA SENSORES ***************************************");
+//    //Serial sensor de flujo
+//    Serial.print("Frecuencia: ");
+//    Serial.print(frequency, 0);
+//    Serial.print(" (Hz)\tCaudal: ");
+//    Serial.print(flow_Lmin, 3);
+//    Serial.println(" (L/min)");
+//
+//    //Serial sensor de nivel de agua
+//    Serial.print("Distancia: ");
+//    Serial.print(distancia);
+//    Serial.println(" cm");
+//
+//    //Serial sensor de lluvia
+//    Serial.print("Intensidad lluvia: ");
+//    Serial.print(intensidadLluvia);
+//    Serial.print(" - ");
+//    Serial.print(" Estado lluvia: ");
+//    Serial.print(estadoLluvia);
+//    Serial.println(" ");
+//
+//    //Serial sensor de temperatura y humeda ambiental
+//    Serial.print("Humedad relativa: ");
+//    Serial.print(humedadAmbiental);
+//    Serial.print(" %\t");
+//    Serial.print("Temperatura: ");
+//    Serial.print(temperaturaAmbiental);
+//    Serial.println(" *C");
+//
+//    Serial.println("*******************************************************");
 
   //ENVIO DE DATOS AL ESP32 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -265,9 +265,9 @@ void loop()
     serializeJsonPretty(json, output);
 
     //Poner JSON en el serial 9600 
-    Serial.println("SALIDA JSON ----------------------------------------------");
+    //Serial.println("SALIDA JSON ----------------------------------------------");
     Serial.println(output);
-    Serial.println("----------------------------------------------------------");
+    //Serial.println("----------------------------------------------------------");
 
   //MOSTRAR EN PANTALLA /////////////////////////////////////////////////////////////////////////////////////////
     
