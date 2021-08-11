@@ -76,7 +76,14 @@ void loop() {
 
     deserializeJson(doc2, Serial2.readString());
     //poner variables para enviar a la plataforma
+    variables["frecuancia_flujo"] = doc2["frecuancia_flujo"];
+    variables["flujo_agua"] = doc2["flujo_agua"];
     variables["nivel_agua"] = doc2["nivel_agua"];
+    variables["intensidad_lluvia"] = doc2["intensidad_lluvia"];
+    variables["estado_lluvia"] = doc2["estado_lluvia"];
+    variables["humedad_ambiente"] = doc2["huemdad_ambiental"];
+    variables["temperatura_ambiente"] = doc2["temperatura_ambiental"];
+
     
 //    Serial.print("Datos from mega");
 //    Serial.println(Serial2.readString());
