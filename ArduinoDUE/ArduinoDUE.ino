@@ -195,7 +195,8 @@ void loop()
     digitalWrite(pulso, HIGH); //envío del pulso ultrasónico
     delayMicroseconds(10);
     tiempo = pulseIn(rebote, HIGH);  //funcion para medir el tiempo y guardarla en la variable "tiempo"
-    distancia = 0.01715*tiempo; //fórmula para calcular la distancia
+    distancia = 20 - (0.01715*tiempo); //fórmula para calcular la distancia
+    
 
     //VOID LOOP sensor de lluvia
     intensidadLluvia = analogRead(analog_lluvia); 
